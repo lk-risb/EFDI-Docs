@@ -38,7 +38,7 @@ netbird status
 
 ## Part B — WireGuard (Swarm nodes only)
 
-Used exclusively to connect the swarm servers to each other. All other traffic
+Used exclusively to connect the swarm servers to each other over dedicated VPN network. All other traffic
 goes over NetBird.
 
 > [!NOTE]
@@ -65,7 +65,7 @@ wg genpsk
 ```
 
 Collect from each node: its **public key** and its reachable **endpoint address**
-(use the node's NetBird IP) — you need them for the peer config.
+(use the node's physical NIC IP) — you need them for the peer config.
 
 ### 3. Configure
 
@@ -77,13 +77,13 @@ Create `/etc/wireguard/wg1.conf`.
 [Interface]
 Address = 10.10.0.1/24
 ListenPort = 52820
-PrivateKey = <NODE1_PRIVATE_KEY>
+PrivateKey = NODE1_PRIVATE_KEY
 
 [Peer]
-PublicKey = <NODE2_PUBLIC_KEY>
-PresharedKey = <COMMON_PRESHARED_KEY>
+PublicKey = NODE2_PUBLIC_KEY
+PresharedKey = COMMON_PRESHARED_KEY
 AllowedIPs = 10.10.0.0/24
-Endpoint = <NODE2_ADDRESS>:52820
+Endpoint = NODE2_ADDRESS:52820
 ```
 
 **Node 2** (`10.10.0.2`):
@@ -92,13 +92,13 @@ Endpoint = <NODE2_ADDRESS>:52820
 [Interface]
 Address = 10.10.0.2/24
 ListenPort = 52820
-PrivateKey = <NODE2_PRIVATE_KEY>
+PrivateKey = NODE2_PRIVATE_KEY
 
 [Peer]
-PublicKey = <NODE1_PUBLIC_KEY>
-PresharedKey = <COMMON_PRESHARED_KEY>
+PublicKey = NODE1_PUBLIC_KEY
+PresharedKey = COMMON_PRESHARED_KEY
 AllowedIPs = 10.10.0.0/24
-Endpoint = <NODE1_ADDRESS>:52820
+Endpoint = NODE1_ADDRESS:52820
 ```
 
 ### 4. Enable
