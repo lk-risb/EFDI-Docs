@@ -83,6 +83,7 @@ PrivateKey = NODE1_PRIVATE_KEY
 PublicKey = NODE2_PUBLIC_KEY
 PresharedKey = COMMON_PRESHARED_KEY
 AllowedIPs = 10.10.0.0/24
+PersistentKeepalive = 25
 Endpoint = NODE2_ADDRESS:52820
 ```
 
@@ -98,6 +99,7 @@ PrivateKey = NODE2_PRIVATE_KEY
 PublicKey = NODE1_PUBLIC_KEY
 PresharedKey = COMMON_PRESHARED_KEY
 AllowedIPs = 10.10.0.0/24
+PersistentKeepalive = 25
 Endpoint = NODE1_ADDRESS:52820
 ```
 
