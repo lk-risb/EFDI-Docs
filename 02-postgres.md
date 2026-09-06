@@ -4,9 +4,9 @@
 - **Package:** Minimal / Enterprise Postgres 18
 
 > [!IMPORTANT]
-> In this and all following steps, replace the example passwords with secure,
-> randomly generated values and store them in your secrets manager / password
-> vault. Do not use the literal values shown here.
+> The upper-case tokens (`EFDI_DB_PASSWORD`, `NETBIRD_DB_PASSWORD`, …) are
+> placeholders. Replace each with a secure, randomly generated value and store it
+> in the `LTK_EFDI_pass.kdbx` KeePass database. Do not use the literal tokens.
 
 ## 1. Install Postgres
 
@@ -31,7 +31,7 @@ sudo systemctl enable --now postgresql
 ## 2. Create root/admin user and enable remote access
 
 ```bash
-sudo -u postgres psql -c "CREATE ROLE efdi WITH LOGIN SUPERUSER PASSWORD '<generated-password>';"
+sudo -u postgres psql -c "CREATE ROLE efdi WITH LOGIN SUPERUSER PASSWORD 'EFDI_DB_PASSWORD';"
 ```
 
 Edit `/etc/postgresql/18/main/pg_hba.conf` and add:
@@ -60,7 +60,7 @@ sudo systemctl restart postgresql
 ## 3. NetBird databases
 
 ```bash
-sudo -u postgres psql -c "CREATE ROLE netbird WITH LOGIN SUPERUSER PASSWORD '<generated-password>';"
+sudo -u postgres psql -c "CREATE ROLE netbird WITH LOGIN PASSWORD 'NETBIRD_DB_PASSWORD';"
 
 sudo -u postgres psql -c "CREATE DATABASE netbird_store;"
 sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE netbird_store TO netbird;"
@@ -72,23 +72,31 @@ sudo -u postgres psql -c "CREATE DATABASE netbird_activity;"
 sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE netbird_activity TO netbird;"
 ```
 
-## 4. Filestore database
+## 4. Dockhand database
 
 ```bash
-sudo -u postgres psql -c "CREATE ROLE filestore WITH LOGIN SUPERUSER PASSWORD '<generated-password>';"
+sudo -u postgres psql -c "CREATE ROLE dockhand WITH LOGIN PASSWORD 'DOCKHAND_DB_PASSWORD';"
+sudo -u postgres psql -c "CREATE DATABASE dockhand;"
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE dockhand TO dockhand;"
+```
+
+## 5. Filestore database
+
+```bash
+sudo -u postgres psql -c "CREATE ROLE filestore WITH LOGIN PASSWORD 'FILESTORE_DB_PASSWORD';"
 sudo -u postgres psql -c "CREATE DATABASE filestore;"
 sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE filestore TO filestore;"
 ```
 
-## 5. CA database (optional)
+## 6. CA database (optional)
 
 ```bash
-sudo -u postgres psql -c "CREATE ROLE stepca WITH LOGIN SUPERUSER PASSWORD '<generated-password>';"
+sudo -u postgres psql -c "CREATE ROLE stepca WITH LOGIN PASSWORD 'STEPCA_DB_PASSWORD';"
 sudo -u postgres psql -c "CREATE DATABASE stepca;"
 sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE stepca TO stepca;"
 ```
 
-## 6. Administration tool (optional)
+## 7. Administration tool (optional)
 
 If you prefer a GUI over `psql`, you can use [pgAdmin](https://www.pgadmin.org/)
 to administer the database. Install it on your workstation and connect with the
