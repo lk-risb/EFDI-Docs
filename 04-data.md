@@ -49,7 +49,7 @@ Dockhand uses the `dockhand` role and database created in
 
 | File | Placeholder | Value |
 | ---- | ----------- | ----- |
-| `docker-compose.yml` | `DOCKHAND_DB_PASSWORD` (in `DATABASE_URL`) | The `dockhand` DB password set in 02-postgres |
+| `docker-compose.yml` | `DOCKHAND_DB_PASSWORD` (in DATABASE_URL) | The `dockhand` DB password set in 02-postgres |
 
 ### 2.3 TLS certificate
 
