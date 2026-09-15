@@ -43,7 +43,7 @@ goes over NetBird.
 
 > [!NOTE]
 > Example below is for a two-node swarm using the `10.10.0.0/24` tunnel subnet
-> and UDP port `52820`. Add more `[Peer]` blocks for additional nodes.
+> and UDP port `52830`. Add more `[Peer]` blocks for additional nodes.
 
 ### 1. Install
 
@@ -76,7 +76,7 @@ Create `/etc/wireguard/wg1.conf`.
 ```ini
 [Interface]
 Address = 10.10.0.1/24
-ListenPort = 52820
+ListenPort = 52830
 PrivateKey = NODE1_PRIVATE_KEY
 
 [Peer]
@@ -84,7 +84,7 @@ PublicKey = NODE2_PUBLIC_KEY
 PresharedKey = COMMON_PRESHARED_KEY
 AllowedIPs = 10.10.0.0/24
 PersistentKeepalive = 25
-Endpoint = NODE2_ADDRESS:52820
+Endpoint = NODE2_ADDRESS:52830
 ```
 
 **Node 2** (`10.10.0.2`):
@@ -92,7 +92,7 @@ Endpoint = NODE2_ADDRESS:52820
 ```ini
 [Interface]
 Address = 10.10.0.2/24
-ListenPort = 52820
+ListenPort = 52830
 PrivateKey = NODE2_PRIVATE_KEY
 
 [Peer]
@@ -100,7 +100,7 @@ PublicKey = NODE1_PUBLIC_KEY
 PresharedKey = COMMON_PRESHARED_KEY
 AllowedIPs = 10.10.0.0/24
 PersistentKeepalive = 25
-Endpoint = NODE1_ADDRESS:52820
+Endpoint = NODE1_ADDRESS:52830
 ```
 
 ### 4. Enable
