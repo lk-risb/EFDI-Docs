@@ -20,13 +20,13 @@ This initializes the JuiceFS metadata in the `filestore` database. Run it only
 once per volume.
 
 ```bash
-juicefs format --storage postgres --bucket "localhost/filestore" --access-key filestore --secret-key <filestore-password> "postgres://filestore:<filestore-password>@localhost/filestore" filestore
+juicefs format --storage postgres --bucket "localhost/filestore" --access-key filestore --secret-key <filestore-password> "postgres://filestore:<filestore-password>@127.0.0.1/filestore" filestore
 ```
 
 ## 3. Test mount
 
 ```bash
-juicefs mount "postgres://filestore:<filestore-password>@localhost/filestore" /mnt/data
+juicefs mount "postgres://filestore:<filestore-password>@127.0.0.1/filestore" /mnt/data
 ```
 
 Verify with `df -h /mnt/data`, then stop it with `Ctrl+C` before setting up the
@@ -45,7 +45,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-Environment="DSN=postgres://filestore:<filestore-password>@localhost/filestore?sslmode=disable"
+Environment="DSN=postgres://filestore:<filestore-password>@127.0.0.1/filestore?sslmode=disable"
 ExecStart=/usr/local/bin/juicefs mount --writeback --cache-size=204800 --max-uploads=50 --no-usage-report ${DSN} /mnt/data -o allow_other,writeback_cache,max_read=99
 ExecStop=/usr/local/bin/juicefs umount /mnt/data
 Restart=on-failure
