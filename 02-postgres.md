@@ -49,6 +49,7 @@ Edit `/etc/postgresql/18/main/postgres.conf` and set:
 
 ```conf
 listen_addresses = '0.0.0.0'
+shared_buffers = 512MB
 ```
 
 Restart:

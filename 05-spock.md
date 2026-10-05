@@ -53,7 +53,7 @@ sudo -u postgres psql -c "SELECT sourcefile, name, sourceline, error FROM pg_fil
 Restart and verify the key settings applied:
 
 ```bash
-sudo systemctl restart postgresql@18-main
+sudo systemctl restart postgresql
 sudo -u postgres psql -c "SHOW wal_level;"
 sudo -u postgres psql -c "SHOW shared_preload_libraries;"
 sudo -u postgres psql -c "SHOW max_active_replication_origins;"
@@ -90,10 +90,14 @@ sudo -u postgres psql -c "CREATE ROLE spock WITH LOGIN SUPERUSER REPLICATION PAS
 
 ## 5. Enable the extension in each replicated database (both nodes)
 
-Run for every database that needs replication (here `postgres`):
+Run for every database that needs replication (`-d REPLICATED_DB_NAME`).
+
+> [!NOTE]
+> Spock cannot run on the `postgres` maintenance database — pick a real
+> application database.
 
 ```bash
-sudo -u postgres psql -d postgres -c "CREATE EXTENSION IF NOT EXISTS spock;"
+sudo -u postgres psql -d REPLICATED_DB_NAME -c "CREATE EXTENSION IF NOT EXISTS spock;"
 ```
 
 ## 6. Initial data sync (optional, when bootstrapping a fresh node)
@@ -112,21 +116,27 @@ sudo -u postgres psql -f postgres_full.sql
 
 ## 7. Register the nodes
 
-Run each `node_create` **on its own node**. The local node needs no password
-(peer/local auth); remote DSNs include the password.
+Run each `node_create` **on its own node**, against the database being
+replicated (`-d REPLICATED_DB_NAME`).
+
+> [!NOTE]
+> Every `spock.*` call below targets one specific database — run it with
+> `psql -d <dbname>`, matching the database from step 5. The `dbname=` inside
+> each `dsn`/`provider_dsn` must also point at that same database on the
+> *other* node, not just any database on it.
 
 ```bash
 # on swarm1
-sudo -u postgres psql -c "SELECT spock.node_create(node_name := 'swarm1', dsn := 'host=10.10.0.1 port=5432 dbname=postgres user=spock password=SPOCK_DB_PASSWORD');"
+sudo -u postgres psql -d REPLICATED_DB_NAME -c "SELECT spock.node_create(node_name := 'swarm1', dsn := 'host=10.10.0.1 port=5432 dbname=REPLICATED_DB_NAME user=spock password=SPOCK_DB_PASSWORD');"
 
 # on swarm2
-sudo -u postgres psql -c "SELECT spock.node_create(node_name := 'swarm2', dsn := 'host=10.10.0.2 port=5432 dbname=postgres user=spock password=SPOCK_DB_PASSWORD');"
+sudo -u postgres psql -d REPLICATED_DB_NAME -c "SELECT spock.node_create(node_name := 'swarm2', dsn := 'host=10.10.0.2 port=5432 dbname=REPLICATED_DB_NAME user=spock password=SPOCK_DB_PASSWORD');"
 ```
 
 ## 8. Add tables to the replication set (both nodes)
 
 ```bash
-sudo -u postgres psql -c "SELECT spock.repset_add_all_tables('default', ARRAY['public']);"
+sudo -u postgres psql -d REPLICATED_DB_NAME -c "SELECT spock.repset_add_all_tables('default', ARRAY['public']);"
 ```
 
 Re-run this after creating new tables, or manage sets from Spock Tower (below).
@@ -134,27 +144,32 @@ Re-run this after creating new tables, or manage sets from Spock Tower (below).
 ## 9. Create subscriptions
 
 One subscription per direction. Each is created **on the node that receives** the
-changes, pointing at the other node as provider.
+changes, pointing at the other node as provider. `dbname` in `provider_dsn` must
+be the same replicated database on the other node.
+
+> [!NOTE]
+> `synchronize_structure` (schema/DDL) and `synchronize_data` (existing rows)
+> both default to `false` — set both explicitly or `sub_create` copies neither.
 
 ```bash
-# on swarm1 — receive from swarm2
-sudo -u postgres psql -c "SELECT spock.sub_create(subscription_name := 'sub_swarm1_swarm2', provider_dsn := 'host=10.10.0.2 port=5432 dbname=postgres user=spock password=SPOCK_DB_PASSWORD');"
+# on swarm2 — receive from swarm1
+sudo -u postgres psql -d REPLICATED_DB_NAME -c "SELECT spock.sub_create(subscription_name := 'sub_swarm1', provider_dsn := 'host=10.10.0.1 port=5432 dbname=REPLICATED_DB_NAME user=spock password=SPOCK_DB_PASSWORD', synchronize_structure := true, synchronize_data := true);"
 
-# on swarm2 — receive from swarm1 (multi-master)
-sudo -u postgres psql -c "SELECT spock.sub_create(subscription_name := 'sub_swarm2_swarm1', provider_dsn := 'host=10.10.0.1 port=5432 dbname=postgres user=spock password=SPOCK_DB_PASSWORD');"
+# on swarm1 — receive from swarm2 (multi-master)
+sudo -u postgres psql -d REPLICATED_DB_NAME -c "SELECT spock.sub_create(subscription_name := 'sub_swarm2', provider_dsn := 'host=10.10.0.2 port=5432 dbname=REPLICATED_DB_NAME user=spock password=SPOCK_DB_PASSWORD', synchronize_structure := true, synchronize_data := true);"
 ```
 
 Wait for each to finish its initial sync:
 
 ```bash
-sudo -u postgres psql -c "SELECT spock.sub_wait_for_sync('sub_swarm1_swarm2');"
+sudo -u postgres psql -d REPLICATED_DB_NAME -c "SELECT spock.sub_wait_for_sync('sub_swarm1');"
 ```
 
 ## 10. Finalise and check
 
 ```bash
-sudo -u postgres psql -c "GRANT USAGE ON SCHEMA spock TO spock;"
-sudo -u postgres psql -c "SELECT * FROM spock.sub_show_status();"
+sudo -u postgres psql -d REPLICATED_DB_NAME -c "GRANT USAGE ON SCHEMA spock TO spock;"
+sudo -u postgres psql -d REPLICATED_DB_NAME -c "SELECT * FROM spock.sub_show_status();"
 ```
 
 `sub_show_status()` should report `replicating` for every subscription.
